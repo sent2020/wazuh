@@ -84,19 +84,21 @@ void *w_logtest_main(w_logtest_connection_t * connection);
 
 /**
  * @brief Process client's request
- * @param fd File descriptor which represents the client
+ * @param token client identifier
  */
 void w_logtest_process_log(char * token);
 
 /**
  * @brief Create resources necessary to service client
- * @param fd File descriptor which represents the client
+ * @param token client identifier
+ * @param msg_error contains the message to send to the client in case of invalid rules or decoder otherwise, it's null
+ * @return NULL on failure, otherwise a w_logtest_session_t object which represents to the client
  */
 w_logtest_session_t *w_logtest_initialize_session(char * token, OSList* log_msg);
 
 /**
  * @brief Free resources after client closes connection
- * @param fd File descriptor which represents the client
+ * @param token client identifier
  */
 void w_logtest_remove_session(char * token);
 

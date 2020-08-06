@@ -84,6 +84,7 @@
 #define MAX_RULEINFODETAIL  32
 
 typedef struct EventList EventList;
+typedef struct _Eventinfo Eventinfo;
 
 typedef struct _RuleInfoDetail {
     int type;

@@ -7,18 +7,43 @@
  * Foundation
  */
 
+#ifndef LOGTEST_H
+#define LOGTEST_H
+
 #include "shared.h"
 #include "rules.h"
 #include "config.h"
 #include "decoders/decoder.h"
 #include "eventinfo.h"
+#include "cleanevent.h"
 #include "lists.h"
 #include "lists_make.h"
 #include "fts.h"
 #include "accumulator.h"
 #include "../config/logtest-config.h"
 #include "../os_net/os_net.h"
+#include "format/to_json.h"
 #include <time.h>
+
+
+/* JSON REQUEST / RESPONSE fields names */
+#define W_LOGTEST_JSON_TOKEN            "token"   ///< Token field name of json input/output.
+#define W_LOGTEST_JSON_EVENT            "event"   ///< Event field name of json input.
+#define W_LOGTEST_JSON_LOGFORMAT   "log_format"   ///< Log format field name of json input.
+#define W_LOGTEST_JSON_LOCATION      "location"   ///< Location field name of json input.
+#define W_LOGTEST_JSON_ALERT            "alert"   ///< Alert field name of json output (boolean).
+#define W_LOGTEST_JSON_MESSAGE        "message"   ///< Message format field name of json output.
+#define W_LOGTEST_JSON_CODE           "codemsg"   ///< Code of message field name of json output (number)
+#define W_LOGTEST_JSON_OUTPUT          "output"   ///< Output field name of json output.
+
+#define W_LOGTEST_TOKEN_LENGH                 8   ///< Lenght of token
+#define W_LOGTEST_ERROR_JSON_PARSE_NSTR      20   ///< Number of characters to show in parsing error
+
+/* Return codes for responses */
+#define W_LOGTEST_RCODE_ERROR_INPUT          -2   ///< Return code: Input error, malformed json, input field missing.
+#define W_LOGTEST_RCODE_ERROR_PROCESS        -1   ///< Return code: Processing with error.
+#define W_LOGTEST_RCODE_SUCCESS               0   ///< Return code: Successful request.
+#define W_LOGTEST_RCODE_WARNING               1   ///< Return code: Successful request with warning messages.
 
 
 /**
@@ -84,9 +109,11 @@ void *w_logtest_main(w_logtest_connection_t * connection);
 
 /**
  * @brief Process client's request
- * @param token client identifier
+ * @param request client input
+ * @param session client session
+ * @return NULL on failure, otherwise the alert generated
  */
-void w_logtest_process_log(char * token);
+char *w_logtest_process_log(cJSON *request,  w_logtest_session_t *session);
 
 /**
  * @brief Create resources necessary to service client
@@ -117,3 +144,5 @@ void * w_logtest_check_inactive_sessions(__attribute__((unused)) void * arg);
  * @return 1 on success, otherwise return 0
  */
 int w_logtest_fts_init(OSList **fts_list, OSHash **fts_store);
+
+#endif

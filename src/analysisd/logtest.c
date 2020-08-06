@@ -108,8 +108,137 @@ void *w_logtest_main(w_logtest_connection_t *connection) {
 }
 
 
-void w_logtest_process_log(char *token) {
+char *w_logtest_process_log(cJSON *request,  w_logtest_session_t *session) {
 
+    char *event_msg = NULL;
+    cJSON *event = NULL;
+    char *output = NULL;
+    Eventinfo *lf = NULL;
+    regex_matching rule_match;
+    regex_matching decoder_match;
+
+    memset(&rule_match, 0, sizeof(regex_matching));
+    memset(&decoder_match, 0, sizeof(regex_matching));
+
+    /* Get log */
+    if (event = cJSON_GetObjectItem(request, W_LOGTEST_JSON_EVENT), !event) {
+        return output;
+    }
+
+    if (event_msg = cJSON_GetStringValue(event), !event_msg) {
+        return output;
+    }
+
+    /* Initialize eventinfo which will contain alert information */
+    os_calloc(1, sizeof(Eventinfo), lf);
+    os_calloc(Config.decoder_order_size, sizeof(DynamicField), lf->fields);
+    Zero_Eventinfo(lf);
+
+    /* Preprocessing */
+    if (OS_CleanMSG(event_msg, lf) < 0) {
+
+        merror(IMSG_ERROR, event_msg);
+        Free_Eventinfo(lf);
+        return output;
+    }
+
+    lf->size = strlen(lf->log);
+
+    /* Decoding */
+    OSDecoderNode *decodernode = NULL;
+
+    if (lf->program_name) {
+        decodernode = session->decoderlist_forpname;
+    } else {
+        decodernode = session->decoderlist_nopname;
+    }
+
+    DecodeEvent(lf, Config.g_rules_hash, &decoder_match, decodernode);
+
+    /* Run accumulator */
+    if ( lf->decoder_info->accumulate == 1 ) {
+        lf = Accumulate(lf, &session->acm_store, &session->acm_lookups, &session->acm_purge_ts);
+    }
+
+    /* Rules matching */
+    RuleNode *rulenode = NULL;
+    RuleInfo * ruleinformation = NULL;
+
+    do {
+
+        if (lf->decoder_info->type == OSSEC_ALERT) {
+            if (!lf->generated_rule) {
+                break;
+            }
+            ruleinformation = lf->generated_rule;
+        }
+
+        /* The categories must match */
+        if (rulenode->ruleinfo->category != lf->decoder_info->type) {
+            continue;
+        }
+
+        /* Search the rule that match */
+        if (ruleinformation = OS_CheckIfRuleMatch(lf, session->eventlist, &session->cdblistnode,
+            rulenode, &rule_match, &session->fts_list, &session->fts_store), !ruleinformation) {
+            continue;
+        }
+
+        lf->generated_rule = ruleinformation;
+
+        /* Ignore level 0 */
+        if (ruleinformation->level == 0) {
+            break;
+        }
+
+        /* Check ignore time */
+        if (ruleinformation->ignore_time) {
+
+            if (ruleinformation->time_ignored == 0) {
+                ruleinformation->time_ignored = lf->generate_time;
+            } else if ((lf->generate_time - ruleinformation->time_ignored) < ruleinformation->ignore_time) {
+                /* If the current time - the time the rule was ignored is less than the time it should be ignored,
+                   do not alert again */
+                break;
+            } else {
+                ruleinformation->time_ignored = 0;
+            }
+        }
+
+        /* Check if we should ignore it */
+        if (ruleinformation->ckignore && IGnore(lf, 0)) {
+            lf->generated_rule = NULL;
+            break;
+        }
+
+        /* Copy the structure to the state memory of if_matched_sid */
+        if (ruleinformation->sid_prev_matched) {
+
+            if (!OSList_AddData(ruleinformation->sid_prev_matched, lf)) {
+                merror("Unable to add data to sig list.");
+            } else {
+                lf->sid_node_to_delete = ruleinformation->sid_prev_matched->last_node;
+            }
+        }
+
+        /* Group list */
+        else if (ruleinformation->group_prev_matched) {
+
+            for (unsigned int i = 0; i < ruleinformation->group_prev_matched_sz; i++) {
+                if (!OSList_AddData(ruleinformation->group_prev_matched[i], lf)) {
+                    merror("Unable to add data to grp list.");
+                }
+            }
+        }
+
+        OS_AddEvent(lf, session->eventlist);
+        break;
+
+    } while(rulenode = rulenode->next, rulenode);
+
+    output = Eventinfo_to_jsonstr(lf, false);
+
+    return output;
 }
 
 

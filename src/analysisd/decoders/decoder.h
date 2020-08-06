@@ -32,6 +32,7 @@
 #define JSON_ARRAY  8
 
 struct _Eventinfo;
+typedef struct _Eventinfo Eventinfo;
 
 /**
  * @brief Decoder structure
@@ -83,6 +84,16 @@ typedef struct dbsync_context_t {
     char * component;
     cJSON * data;
 } dbsync_context_t;
+
+
+/**
+ * @brief
+ * @param lf
+ * @param rules_hash
+ * @param decoder_match
+ * @param node
+ */
+void DecodeEvent(Eventinfo *lf, OSHash *rules_hash, regex_matching *decoder_match, OSDecoderNode *node);
 
 /**
  * @brief Initialize decoder lists to NULL

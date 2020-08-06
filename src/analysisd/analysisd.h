@@ -71,6 +71,19 @@ ListRule *os_analysisd_cdbrules;
 
 
 /**
+ * @brief Check if a rule matches the event
+ * @param lf event to be processed
+ * @param last_events list of previous events processed
+ * @param cdblists list of cdbs
+ * @param curr_node rule to compare with the event "lf"
+ * @param rule_match stores the regex of the rule
+ * @return the rule information if it matches, otherwise null
+ */
+RuleInfo *OS_CheckIfRuleMatch(Eventinfo *lf, EventList *last_events, ListNode **cdblists,
+                              RuleNode *curr_node, regex_matching *rule_match,
+                              OSList **fts_list, OSHash **fts_store);
+
+/**
  * @brief Listen to analysisd socket for new requests
  */
 void * asyscom_main(__attribute__((unused)) void * arg) ;
@@ -91,17 +104,6 @@ size_t asyscom_dispatch(char * command, char ** output);
  */
 size_t asyscom_getconfig(const char * section, char ** output);
 
-/**
- * @brief Check if a rule matches the event
- * @param lf event to be processed
- * @param last_events list of previous events processed
- * @param cdblists list of cdbs
- * @param curr_node rule to compare with the event "lf"
- * @param rule_match stores the regex of the rule
- * @return the rule information if it matches, otherwise null
- */
-RuleInfo *OS_CheckIfRuleMatch(Eventinfo *lf, EventList *last_events, ListNode **cdblists, RuleNode *curr_node,
-                              regex_matching *rule_match, OSList **fts_list, OSHash **fts_store);
 
 #define WM_ANALYSISD_LOGTAG ARGV0 "" // Tag for log messages
 

@@ -110,18 +110,19 @@ if(${TARGET} STREQUAL "winagent")
   list(APPEND syscheckd_tests_flags " ")
 else()
   list(APPEND syscheckd_tests_flags "-Wl,--wrap,OS_ConnectUnixDomain -Wl,--wrap,fprintf -Wl,--wrap,IsSocket \
-                                     -Wl,--wrap,IsFile -Wl,--wrap,IsDir -Wl,--wrap,IsLink -Wl,--wrap,IsFile \
+                                     -Wl,--wrap,IsFile -Wl,--wrap,IsDir -Wl,--wrap,IsLink -Wl,--wrap,audit_delete_rule \
                                      -Wl,--wrap,audit_restart -Wl,--wrap,_minfo -Wl,--wrap,_merror -Wl,--wrap,fopen \
                                      -Wl,--wrap,fclose -Wl,--wrap,symlink -Wl,--wrap,unlink -Wl,--wrap,fwrite \
                                      -Wl,--wrap,audit_open -Wl,--wrap,audit_get_rule_list -Wl,--wrap,audit_close \
-                                     -Wl,--wrap,_mdebug1 -Wl,--wrap,_mwarn -Wl,--wrap,W_Vector_length \
-                                     -Wl,--wrap,search_audit_rule -Wl,--wrap,audit_add_rule \
-                                     -Wl,--wrap,W_Vector_insert_unique -Wl,--wrap,SendMSG \
+                                     -Wl,--wrap,_mdebug1 -Wl,--wrap,_mwarn -Wl,--wrap,W_Vector_length -Wl,--wrap,CreateThread \
+                                     -Wl,--wrap,search_audit_rule -Wl,--wrap,audit_add_rule -Wl,--wrap,pthread_cond_wait \
+                                     -Wl,--wrap,W_Vector_insert_unique -Wl,--wrap,SendMSG -Wl,--wrap,pthread_cond_init \
                                      -Wl,--wrap,fim_whodata_event -Wl,--wrap,fflush -Wl,--wrap,fgets \
-                                     -Wl,--wrap,openproc -Wl,--wrap,readproc -Wl,--wrap,freeproc \
-                                     -Wl,--wrap,closeproc -Wl,--wrap,_mdebug2 -Wl,--wrap,get_user \
+                                     -Wl,--wrap,openproc -Wl,--wrap,readproc -Wl,--wrap,freeproc -Wl,--wrap,pthread_mutex_lock \
+                                     -Wl,--wrap,closeproc -Wl,--wrap,_mdebug2 -Wl,--wrap,get_user -Wl,--wrap,pthread_mutex_unlock \
                                      -Wl,--wrap,get_group -Wl,--wrap,realpath -Wl,--wrap,readlink -Wl,--wrap,fread \
-                                     -Wl,--wrap,fseek -Wl,--wrap,remove -Wl,--wrap,atexit -Wl,--wrap,getpid")
+                                     -Wl,--wrap,fseek -Wl,--wrap,remove -Wl,--wrap,atexit -Wl,--wrap,getpid \
+                                     -Wl,--wrap,select -Wl,--wrap,recv -Wl,--wrap,sleep")
 endif()
 
 set(SEECHANGES_BASE_FLAGS "-Wl,--wrap,_merror -Wl,--wrap,_mwarn -Wl,--wrap,lstat -Wl,--wrap,stat -Wl,--wrap,abspath \
@@ -163,7 +164,7 @@ else()
   list(APPEND syscheckd_tests_flags "${RUN_REALTIME_BASE_FLAGS}")
 endif()
 
-set(SYSCHECK_CONFIG_BASE_FLAGS "-Wl,--wrap,_merror -Wl,--wrap,_mdebug1")
+set(SYSCHECK_CONFIG_BASE_FLAGS "-Wl,--wrap,_merror -Wl,--wrap,_mdebug1 -Wl,--wrap,_mwarn")
 
 list(APPEND syscheckd_tests_names "test_syscheck_config")
 if(${TARGET} STREQUAL "agent")

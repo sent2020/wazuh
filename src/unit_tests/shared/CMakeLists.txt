@@ -99,7 +99,7 @@ list(APPEND shared_tests_flags "-Wl,--wrap=sysconf,--wrap=getpwnam_r,--wrap=getg
 
 list(APPEND shared_tests_names "test_mq_op")
 list(APPEND shared_tests_flags "-Wl,--wrap,OS_BindUnixDomain -Wl,--wrap,OS_ConnectUnixDomain -Wl,--wrap,sleep \
-                                -Wl,--wrap,_mdebug1 -Wl,--wrap,OS_getsocketsize -Wl,--wrap,_merror")
+                                -Wl,--wrap,_mdebug1 -Wl,--wrap,OS_getsocketsize -Wl,--wrap,_merror -Wl,--wrap,getpid")
 endif()
 
 

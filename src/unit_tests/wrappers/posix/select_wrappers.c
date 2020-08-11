@@ -1,5 +1,4 @@
 /* Copyright (C) 2015-2020, Wazuh Inc.
- * Copyright (C) 2009 Trend Micro Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it
@@ -13,7 +12,13 @@
 #include <stdarg.h>
 #include <setjmp.h>
 #include <cmocka.h>
+#include "../../../syscheckd/syscheck.h"
 
-int __wrap_select() {
+int __wrap_select(__attribute__((unused)) int nfds,
+                  __attribute__((unused)) fd_set *restrict readfds,
+                  __attribute__((unused)) fd_set *restrict writefds,
+                  __attribute__((unused)) fd_set *restrict errorfds,
+                  __attribute__((unused)) struct timeval *restrict timeout) {
+    if(audit_thread_active) audit_thread_active--;
     return mock();
 }

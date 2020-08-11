@@ -34,14 +34,9 @@
 
 #include "external/procps/readproc.h"
 
-extern volatile int audit_health_check_deletion;
-
-int __wrap_select(int nfds, fd_set *restrict readfds, fd_set *restrict writefds, fd_set *restrict errorfds, struct timeval *restrict timeout)
-{
-    if(audit_thread_active) audit_thread_active--;
-    if(hc_thread_active) hc_thread_active--;
-    return mock();
-}
+extern volatile int audit_health_check_creation;
+extern volatile int hc_thread_active;
+int hc_success = 0;
 
 int __wrap_recv(int __fd, void *__buf, size_t __n, int __flags)
 {
@@ -83,15 +78,10 @@ int __wrap_pthread_mutex_unlock (pthread_mutex_t *__mutex) {
 }
 
 int __wrap_CreateThread(void * (*function_pointer)(void *), void *data) {
-    return 1;
-}
-
-unsigned int __wrap_sleep(unsigned int seconds) {
     if(hc_success) {
         audit_health_check_creation = 1;
     }
-
-    return 0;
+    return 1;
 }
 
 /* setup/teardown */
@@ -2242,6 +2232,8 @@ void test_audit_health_check_success(void **state)
 
     will_return(__wrap_fclose, 0);
 
+    expect_value(__wrap__sleep, seconds, 1);
+
     expect_string(__wrap__mdebug1, formatted_msg, FIM_HEALTHCHECK_SUCCESS);
 
     will_return(__wrap_unlink, 0);
@@ -2275,7 +2267,7 @@ void test_audit_read_events_select_case_0_healthcheck(void **state)
 {
     (void) state;
     int *audit_sock = *state;
-    hc_thread_active = 3;
+    audit_thread_active = 3;
     errno = EEXIST;
     char * buffer = " \
         type=SYSCALL msg=audit(1571914029.306:3004254): arch=c000003e syscall=263 success=yes exit=0 a0=ffffff9c a1=55c5f8170490 a2=0 a3=7ff365c5eca0 items=2 ppid=3211 pid=44082 auid=4294967295 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts3 ses=5 comm=\"test\" exe=\"74657374C3B1\" key=\"wazuh_fim\"\n\
@@ -2325,7 +2317,7 @@ void test_audit_read_events_select_case_0_healthcheck(void **state)
     will_return(__wrap_select, 0);
     will_return(__wrap_select, 1);
 
-    audit_read_events(audit_sock, HEALTHCHECK_MODE);
+    audit_read_events(audit_sock, READING_MODE);
 }
 
 void test_audit_read_events_select_success_recv_error_audit_connection_closed(void **state)

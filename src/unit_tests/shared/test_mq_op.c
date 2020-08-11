@@ -48,11 +48,9 @@ void __wrap__mdebug1(const char * file, int line, const char * func, const char 
     check_expected(formatted_msg);
 }
 
-int __wrap_OS_getsocketsize(int ossock) { 
-    return SOCKET_SIZE; 
+int __wrap_OS_getsocketsize(int ossock) {
+    return SOCKET_SIZE;
 }
-
-void __wrap_sleep(unsigned int seconds){};
 
 int __wrap_OS_BindUnixDomain(const char * path, int type, int max_msg_size){
     return (int) mock();
@@ -66,32 +64,32 @@ int __wrap_OS_ConnectUnixDomain(const char * path, int type, int max_msg_size){
 
 void test_start_mq_read_success(void ** state){
     (void)state; // Unused
-    
+
     /* Function parameters */
     short int n_attempts = 0;
     short int type = READ;
     char * path = "/test";
-    
+
     int ret = 0;
 
     will_return(__wrap_OS_BindUnixDomain, 0);
-    
+
     ret = StartMQ(path, type, n_attempts);
     assert_false(ret);
 }
 
 void test_start_mq_read_fail(void ** state){
     (void)state; // Unused
-    
+
     /* Function parameters */
     short int n_attempts = 0;
     short int type = READ;
     char * path = "/test";
 
     int ret = 0;
-    
+
     will_return(__wrap_OS_BindUnixDomain, -1);
-    
+
     ret = StartMQ(path, type, n_attempts);
     assert_int_equal(ret, -1);
 
@@ -99,17 +97,17 @@ void test_start_mq_read_fail(void ** state){
 
 void test_start_mq_write_simple_success(void ** state){
     (void)state; // Unused
-    
+
     /* Function parameters */
     short int n_attempts = 1;
     short int type = WRITE;
     char * path = "/test";
-    
+
     int ret = 0;
     char messages[2][OS_SIZE_64];
 
     will_return(__wrap_OS_ConnectUnixDomain, 0);
-    
+
     snprintf(messages[0], OS_SIZE_64,"Connected succesfully to %s after %d attempts", path, 0);
     expect_string(__wrap__mdebug1, formatted_msg, messages[0]);
 
@@ -122,7 +120,7 @@ void test_start_mq_write_simple_success(void ** state){
 
 void test_start_mq_write_simple_fail(void ** state){
     (void)state; // Unused
-    
+
     /* Function parameters */
     short int n_attempts = 1;
     short int type = WRITE;
@@ -134,7 +132,7 @@ void test_start_mq_write_simple_fail(void ** state){
 
     will_return(__wrap_OS_ConnectUnixDomain, -1);
     expect_string(__wrap__mdebug1, formatted_msg, "Can't connect to queue. attempt: 1");
-    
+
     snprintf(expected_str, OS_SIZE_64, "(1210): Queue '%s' not accessible: '%s'", path,strerror(errno));
     expect_string(__wrap__merror, formatted_msg, expected_str);
 
@@ -204,7 +202,7 @@ void test_start_mq_write_inf_success(void ** state){
     short int n_attempts = 0;
     short int type = WRITE;
     char * path = "/test";
-    
+
     int ret = 0;
     char messages[MAX_ATTEMPTS + 1][OS_SIZE_64];
 
@@ -245,7 +243,7 @@ void test_start_mq_write_inf_fail(void ** state){
     will_return(__wrap_OS_ConnectUnixDomain, 0);
     /* Ignoring output */
     expect_any_always(__wrap__mdebug1, formatted_msg);
-    
+
     ret = StartMQ(path, type, n_attempts);
 }
 
@@ -262,6 +260,6 @@ int main(void){
        cmocka_unit_test(test_start_mq_write_inf_success),
        cmocka_unit_test(test_start_mq_write_inf_fail)
        };
-    
+
     return cmocka_run_group_tests(tests, NULL, NULL);
 }
